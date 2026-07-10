@@ -1,6 +1,6 @@
 # Proctora
 
-Proctora is a comprehensive online exam proctoring system that leverages AI to ensure the integrity of remote assessments. It features a robust backend for managing assessments and candidates, alongside real-time monitoring capabilities.
+Proctora is a **MERN stack** comprehensive online exam proctoring system that leverages AI to ensure the integrity of remote assessments. It features a robust backend for managing assessments and candidates, alongside real-time monitoring capabilities.
 
 ## Features
 
