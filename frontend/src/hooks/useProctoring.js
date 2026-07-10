@@ -3,12 +3,14 @@ import * as faceapi from 'face-api.js';
 import axios from 'axios';
 import { useSocket } from '../context/SocketContext';
 
-export const useProctoring = (candidateId, assessmentId) => {
+export const useProctoring = (candidateId, assessmentId, isReviewMode = false) => {
   const videoRef = useRef(null);
   const [isModelsLoaded, setIsModelsLoaded] = useState(false);
   const [violation, setViolation] = useState(null);
+  const [violationCount, setViolationCount] = useState(0);
 
   useEffect(() => {
+    if (isReviewMode) return;
     const loadModels = async () => {
       try {
         // Models should be placed in the public/models directory
@@ -29,6 +31,7 @@ export const useProctoring = (candidateId, assessmentId) => {
 
   const reportViolation = async (type, imageBase64 = null) => {
     setViolation(type);
+    setViolationCount(prev => prev + 1);
     try {
       await axios.post('http://localhost:5000/api/violations', {
         candidateId,
@@ -50,7 +53,7 @@ export const useProctoring = (candidateId, assessmentId) => {
   };
 
   useEffect(() => {
-    if (!isModelsLoaded || !videoRef.current) return;
+    if (isReviewMode || !isModelsLoaded || !videoRef.current) return;
 
     let interval;
     const startWebcam = async () => {
@@ -89,6 +92,7 @@ export const useProctoring = (candidateId, assessmentId) => {
   }, [isModelsLoaded, candidateId, assessmentId]);
 
   useEffect(() => {
+    if (isReviewMode) return;
     const handleVisibilityChange = () => {
       if (document.hidden) {
         reportViolation('TabSwitch');
@@ -111,5 +115,5 @@ export const useProctoring = (candidateId, assessmentId) => {
     };
   }, [candidateId, assessmentId]);
 
-  return { videoRef, isModelsLoaded, violation };
+  return { videoRef, isModelsLoaded, violation, violationCount };
 };

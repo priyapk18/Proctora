@@ -12,11 +12,8 @@ export const createAssessment = async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    const testId = Math.random().toString(36).substring(2, 8).toUpperCase();
-
     const assessment = new Assessment({
       title,
-      testId,
       type,
       description,
       durationMinutes,
@@ -145,13 +142,29 @@ export const submitAssessment = async (req, res) => {
         score
       });
 
-      candidate.status = 'Completed';
       await candidate.save();
 
       res.json({ message: 'Assessment submitted successfully', score });
     }).catch(err => {
       res.status(500).json({ message: err.message });
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete an assessment
+// @route   DELETE /api/assessments/:id
+// @access  Private
+export const deleteAssessment = async (req, res) => {
+  try {
+    const assessment = await Assessment.findById(req.params.id);
+    if (!assessment) {
+      return res.status(404).json({ message: 'Assessment not found' });
+    }
+    
+    await Assessment.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Assessment removed' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

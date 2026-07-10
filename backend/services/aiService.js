@@ -7,17 +7,17 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'placeholder_
 export const generateQuestions = async (prompt, count = 5) => {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const fullPrompt = `Generate EXACTLY ${count} questions based on the following context: "${prompt}". 
-    The questions should be a mix of MCQ, Coding, or Subjective. 
+    const fullPrompt = `Generate EXACTLY ${count} multiple choice questions (MCQ) based on the following context: "${prompt}". 
     
     CRITICAL INSTRUCTIONS:
     - You MUST output exactly ${count} questions.
+    - All questions MUST be multiple choice questions (MCQ). No subjective or "type in the answer" questions.
     - Format the response strictly as a valid JSON array of objects. 
     - Every object must have the following keys: 
       - "questionText" (string)
-      - "type" (string, must be one of 'MCQ', 'Coding', 'Subjective')
-      - "options" (array of exactly 4 strings if type is 'MCQ', otherwise an empty array [])
-      - "correctAnswer" (string, if type is 'MCQ' this must exactly match one of the 4 options, otherwise empty string "")
+      - "type" (string, must be 'MCQ')
+      - "options" (array of exactly 4 strings)
+      - "correctAnswer" (string, must exactly match one of the 4 options)
     
     Ensure no markdown formatting blocks outside the JSON are returned, just the raw JSON array.`;
 

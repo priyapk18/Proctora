@@ -5,7 +5,8 @@ import {
   getAssessmentById,
   generateAIQuestions,
   generatePreviewQuestions,
-  submitAssessment
+  submitAssessment,
+  deleteAssessment
 } from '../controllers/assessmentController.js';
 
 const router = express.Router();
@@ -19,7 +20,8 @@ router.post('/generate-preview', generatePreviewQuestions);
 router.post('/:id/submit', submitAssessment);
 
 router.route('/:id')
-  .get(getAssessmentById);
+  .get(getAssessmentById)
+  .delete(deleteAssessment);
 
 router.route('/:id/generate-ai')
   .post(generateAIQuestions);

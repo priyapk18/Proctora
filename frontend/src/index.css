@@ -1,13 +1,45 @@
 @import "tailwindcss";
 
-@theme {
-  --color-primary: #aa3bff;
-  --color-background: #ffffff;
-  --color-text: #08060d;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   body {
-    @apply bg-background text-text antialiased;
+    @apply bg-slate-50 text-slate-900 font-sans antialiased;
   }
+}
+
+@layer utilities {
+  .pro-card {
+    @apply bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden;
+  }
+  
+  .pro-input {
+    @apply w-full bg-white border border-slate-300 rounded-lg px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all;
+  }
+
+  .pro-btn-primary {
+    @apply w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-lg shadow-sm transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2;
+  }
+  
+  .pro-btn-secondary {
+    @apply w-full bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold py-3 px-4 rounded-lg shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2;
+  }
+}
+
+/* Custom Scrollbar for professional look */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

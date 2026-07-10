@@ -1,9 +1,10 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
 import AssessmentPage from './pages/AssessmentPage';
 import DashboardPage from './pages/DashboardPage';
 import CreateAssessmentPage from './pages/CreateAssessmentPage';
-import CandidateLogin from './pages/CandidateLogin';
+import CandidateDashboard from './pages/CandidateDashboard';
 import { SocketProvider } from './context/SocketContext';
 
 function App() {
@@ -11,9 +12,10 @@ function App() {
     <SocketProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<DashboardPage />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/create-assessment" element={<CreateAssessmentPage />} />
-          <Route path="/candidate-login" element={<CandidateLogin />} />
+          <Route path="/candidate-dashboard" element={<CandidateDashboard />} />
           <Route path="/assessment/:assessmentId" element={<AssessmentPage />} />
         </Routes>
       </BrowserRouter>

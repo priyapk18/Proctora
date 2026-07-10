@@ -2,8 +2,7 @@ import mongoose from 'mongoose';
 
 const assessmentSchema = new mongoose.Schema({
   title: { type: String, required: true },
-  testId: { type: String, required: true, unique: true },
-  type: { type: String, enum: ['Aptitude', 'Technical', 'HR'], required: true },
+  type: { type: String, enum: ['Aptitude', 'Technical', 'Communication'], required: true },
   description: { type: String },
   durationMinutes: { type: Number, required: true },
   questions: [{

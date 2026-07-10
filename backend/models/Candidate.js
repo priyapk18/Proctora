@@ -2,15 +2,14 @@ import mongoose from 'mongoose';
 
 const candidateSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  age: { type: Number },
   email: { type: String, required: true, unique: true },
   phone: { type: String },
-  accessCode: { type: String, unique: true },
   status: { 
     type: String, 
-    enum: ['Invited', 'InProgress', 'Completed', 'Flagged'],
-    default: 'Invited' 
+    enum: ['Active', 'Flagged'],
+    default: 'Active' 
   },
-  assignedAssessments: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Assessment' }],
   submissions: [{
     assessmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Assessment' },
     answers: { type: Map, of: String },

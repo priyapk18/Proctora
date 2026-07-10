@@ -16,8 +16,6 @@ export const uploadCandidates = async (req, res) => {
     const sheetName = workbook.SheetNames[0];
     const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
-    const assessmentId = req.body.assessmentId;
-
     const savedCandidates = [];
 
     for (let row of data) {
@@ -25,20 +23,12 @@ export const uploadCandidates = async (req, res) => {
 
       let candidate = await Candidate.findOne({ email: row.email });
       
-      const accessCode = crypto.randomBytes(4).toString('hex').toUpperCase();
-
       if (!candidate) {
         candidate = new Candidate({
           name: row.name,
           email: row.email,
-          phone: row.phone,
-          accessCode,
-          assignedAssessments: assessmentId ? [assessmentId] : []
+          phone: row.phone
         });
-      } else {
-        if (assessmentId && !candidate.assignedAssessments.includes(assessmentId)) {
-          candidate.assignedAssessments.push(assessmentId);
-        }
       }
 
       await candidate.save();
@@ -46,12 +36,12 @@ export const uploadCandidates = async (req, res) => {
 
       // Send Email
       try {
-        const inviteLink = `http://localhost:5173/assessment?code=${candidate.accessCode}`;
+        const inviteLink = `http://localhost:5173/`;
         await sendEmail({
           email: candidate.email,
           subject: 'Assessment Invitation',
           html: `<p>Hello ${candidate.name},</p>
-                 <p>You have been invited to take an assessment. Please use the following access code: <b>${candidate.accessCode}</b></p>
+                 <p>You have been invited to take an assessment. Please log in at our portal using this email to view your available tests.</p>
                  <p>Click <a href="${inviteLink}">here</a> to begin.</p>`
         });
       } catch (emailError) {
@@ -78,50 +68,102 @@ export const getCandidates = async (req, res) => {
   }
 };
 
-// @desc    Candidate login for assessment
+// @desc    Candidate login/registration
 // @route   POST /api/candidates/login
 // @access  Public
 export const loginCandidate = async (req, res) => {
   try {
-    const { email, testId } = req.body;
+    const { email, name, age, phone } = req.body;
     
-    if (!email || !testId) {
-      return res.status(400).json({ message: 'Email and Test ID are required.' });
+    if (!email || !name) {
+      return res.status(400).json({ message: 'Email and Name are required.' });
     }
 
-    import('mongoose').then(async (mongoose) => {
-      const Assessment = mongoose.model('Assessment');
-      const assessment = await Assessment.findOne({ testId });
+    let candidate = await Candidate.findOne({ email });
+
+    if (!candidate) {
+      // Auto-register candidate
+      candidate = new Candidate({
+        name: name || email.split('@')[0],
+        age: age || undefined,
+        phone: phone || undefined,
+        email
+      });
+      await candidate.save();
+    } else {
+      // Update details if provided during subsequent logins
+      let updated = false;
+      if (name && candidate.name !== name) { candidate.name = name; updated = true; }
+      if (age && candidate.age !== Number(age)) { candidate.age = Number(age); updated = true; }
+      if (phone && candidate.phone !== phone) { candidate.phone = phone; updated = true; }
+      if (updated) await candidate.save();
+    }
+
+    res.json({ message: 'Login successful', candidateId: candidate._id });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get candidate profile and submissions
+// @route   GET /api/candidates/:id/profile
+// @access  Public
+export const getCandidateProfile = async (req, res) => {
+  try {
+    const candidate = await Candidate.findById(req.params.id).populate('submissions.assessmentId');
+    if (!candidate) {
+      return res.status(404).json({ message: 'Candidate not found' });
+    }
+    res.json(candidate);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get candidate leaderboards by category
+// @route   GET /api/candidates/leaderboards
+// @access  Public
+export const getLeaderboards = async (req, res) => {
+  try {
+    const candidates = await Candidate.find().populate('submissions.assessmentId');
+    
+    let leaderboards = {
+      Technical: [],
+      Aptitude: [],
+      Communication: []
+    };
+
+    candidates.forEach(candidate => {
+      let scores = { Technical: 0, Aptitude: 0, Communication: 0 };
       
-      if (!assessment) {
-        return res.status(404).json({ message: 'Invalid Test ID.' });
-      }
-
-      let candidate = await Candidate.findOne({ email });
-
-      if (!candidate) {
-        // Auto-register candidate like a Google Form
-        const accessCode = crypto.randomBytes(4).toString('hex').toUpperCase();
-        candidate = new Candidate({
-          name: email.split('@')[0], // Default name from email
-          email,
-          accessCode,
-          assignedAssessments: [assessment._id]
+      if (candidate.submissions && candidate.submissions.length > 0) {
+        candidate.submissions.forEach(sub => {
+          if (sub.assessmentId && sub.assessmentId.type) {
+            scores[sub.assessmentId.type] += sub.score;
+          }
         });
-        await candidate.save();
       }
 
-      // We allow anyone to take the test if they enter valid email and testId.
-      if (!candidate.assignedAssessments.includes(assessment._id)) {
-        candidate.assignedAssessments.push(assessment._id);
-        await candidate.save();
-      }
-
-      res.json({ message: 'Login successful', candidateId: candidate._id, assessmentId: assessment._id });
-    }).catch(err => {
-      res.status(500).json({ message: err.message });
+      ['Technical', 'Aptitude', 'Communication'].forEach(cat => {
+        if (scores[cat] > 0) {
+          leaderboards[cat].push({
+            id: candidate._id,
+            name: candidate.name,
+            score: scores[cat]
+          });
+        }
+      });
     });
 
+    // Sort each category by score descending
+    ['Technical', 'Aptitude', 'Communication'].forEach(cat => {
+      leaderboards[cat].sort((a, b) => b.score - a.score);
+      // Optional: limit to top 10
+      // leaderboards[cat] = leaderboards[cat].slice(0, 10);
+    });
+
+    res.json(leaderboards);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
